@@ -44,7 +44,6 @@ object NeoData {
     for (rec <- rs.list().asScala) {
       for ((_, o) <- rec.asMap().asScala) {
 
-        println(o.getClass)
         if (o.isInstanceOf[Node]) {
           val node = o.asInstanceOf[Node]
 
