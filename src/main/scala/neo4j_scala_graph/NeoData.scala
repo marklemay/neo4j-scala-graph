@@ -43,7 +43,7 @@ object NeoData {
 
     for (rec <- rs.list().asScala) {
       for ((_, o) <- rec.asMap().asScala) {
-
+        // println(o.getClass)
         if (o.isInstanceOf[Node]) {
           val node = o.asInstanceOf[Node]
 
@@ -88,19 +88,32 @@ object NeoData {
     val oldnodes = g.nodes.map(_.value)
     val oldEdges = g.edges
     var newG = Graph[NeoData, DiEdge]()
-
+    println("Total vertices:")
+    println(oldnodes.size)
+    var countP=0
+    var countA=0
     for (n <- oldnodes) {
       newG += n
+      if (n.labels == Set("Artifact")){
+        countA += 1
+      }
+      if (n.labels == Set("Process")){
+        countP += 1
+      }
     }
+    println("Total Artifacts:")
+    println(countA)
+    println("Total Processes:")
+    println(countP)
 
     for (e <- oldEdges) {
       val rel = e.label.asInstanceOf[NeoRel]
-
-      newG += e._1.value ~> rel
+      // Invert the edge relationship
+      newG += e._2.value ~> e._1.value
       
-      newG += rel ~> e._2.value
+      // newG += rel ~> e._2.value
     }
-
+    
     newG
   }
 }
