@@ -94,7 +94,7 @@ object NeoData {
     g
   }
 
-  @deprecated("beeter to cal storeRecordEncodeEdge directly so multi edges are not collapsed")
+  @deprecated("beeter to call storeRecordEncodeEdge directly so multi edges are not collapsed")
   def toDiGraph(g: Graph[NeoNode, LDiEdge]): Graph[NeoData, DiEdge] = {
     val oldnodes = g.nodes.map(_.value)
     val oldEdges = g.edges
@@ -128,7 +128,9 @@ object NeoData {
     //TODO: faster with the mutable graph?
     var g = Graph[NeoData, DiEdge]()
 
-    for (rec <- rs.list().asScala) {
+    for (rec <- rs.asScala) {
+
+      println(rec)
       for ((_, o) <- rec.asMap().asScala) {
 
         if (o.isInstanceOf[Node]) {
@@ -172,6 +174,42 @@ object NeoData {
       }
     }
     g
+  }
+
+  def allNodes(session: Session): Iterator[NeoNode] = {
+
+    val recs = session.run("""MATCH (s) RETURN s""")
+
+    for (rec <- recs.asScala) yield {
+      val node = rec.get("s").asNode()
+
+      NeoNode(node.id(), node.labels().asScala.toSet, node.asMap().asScala.toMap)
+    }
+  }
+
+  def allEdges(session: Session): Iterator[(Long, NeoRel, Long)] = {
+    //in neo4j all relationships are directed (?)
+    val recs = session.run("""MATCH ()-[r]->() RETURN r """)
+
+    for (rec <- recs.asScala) yield {
+      val rel = rec.get("r").asRelationship()
+
+      (rel.startNodeId(), NeoRel(rel.id(), rel.`type`(), rel.asMap().asScala.toMap), rel.endNodeId())
+    }
+
+  }
+
+  /** essentally the most efficient way to dump a neo4j database into a scala graph */
+  def fullGraph(session: Session): Graph[NeoData, DiEdge] = {
+    val nodes = allNodes(session).toSet
+
+    val idToNode = nodes.map(n => n.id -> n).toMap
+
+    val edges = allEdges(session).map(e => (idToNode(e._1), e._2, idToNode(e._3))).toSet
+
+    val scalaEdges = edges.flatMap(e => Set(e._1 ~> e._2, e._2 ~> e._3))
+
+    Graph.from(nodes, scalaEdges)
   }
 
 }

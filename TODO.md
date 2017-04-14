@@ -1,4 +1,6 @@
 # TODO #
+ * spelling
+ * make the custom queries as efficeint as fullGraph 
  * better package name?
  * support scala 2.12
  * git ignore
