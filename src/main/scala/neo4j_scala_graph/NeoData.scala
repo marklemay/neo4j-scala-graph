@@ -32,8 +32,8 @@ object NeoData {
        WHERE ID(s) = $id
        RETURN s""")
     val node = out.single().get("s").asNode()
-
     NeoNode(node.id(), node.labels().asScala.toSet, node.asMap().asScala.toMap)
+    
   }
 
   // TODO still wish there was a type safe LDiEdge
@@ -162,9 +162,9 @@ object NeoData {
           // assume directed from start to end, TODO: this is not necissarily a safe assumption!
           val rr = NeoRel(rel.id(), rel.`type`(), rel.asMap().asScala.toMap)
           g += rr
-
+          
           g += nodeIdMap(rel.startNodeId()) ~> rr
-
+          
           g += rr ~> nodeIdMap(rel.endNodeId())
 
         } else if (o.isInstanceOf[Path]) {
@@ -182,8 +182,18 @@ object NeoData {
 
     for (rec <- recs.asScala) yield {
       val node = rec.get("s").asNode()
-
-      NeoNode(node.id(), node.labels().asScala.toSet, node.asMap().asScala.toMap)
+      if (node.labels().asScala.toSet == Set("Artifact")){
+        var all_map = node.asMap().asScala.toMap
+        val set = Set("Cont_ID")
+        var new_map = all_map filterKeys set
+        NeoNode(node.id(), node.labels().asScala.toSet, new_map)
+      }
+      else{
+        var all_map = node.asMap().asScala.toMap
+        val set = Set("Cont_ID", "uid")
+        var new_map = all_map filterKeys set
+        NeoNode(node.id(), node.labels().asScala.toSet, new_map)
+      }
     }
   }
 
@@ -202,13 +212,9 @@ object NeoData {
   /** essentally the most efficient way to dump a neo4j database into a scala graph */
   def fullGraph(session: Session): Graph[NeoData, DiEdge] = {
     val nodes = allNodes(session).toSet
-
     val idToNode = nodes.map(n => n.id -> n).toMap
-
     val edges = allEdges(session).map(e => (idToNode(e._1), e._2, idToNode(e._3))).toSet
-
     val scalaEdges = edges.flatMap(e => Set(e._1 ~> e._2, e._2 ~> e._3))
-
     Graph.from(nodes, scalaEdges)
   }
 
