@@ -184,14 +184,19 @@ object NeoData {
       val node = rec.get("s").asNode()
       if (node.labels().asScala.toSet == Set("Artifact")){
         var all_map = node.asMap().asScala.toMap
-        val set = Set("Cont_ID")
-        var new_map = all_map filterKeys set
+        // val set = Set("Cont_ID", "uid")
+        // var new_map = all_map filterKeys set
+        // Unfortunately filterkeys makes it not searializable
+        // https://issues.scala-lang.org/browse/SI-6654
+        var new_map = Map("Cont_ID" -> all_map.get("Cont_ID".asInstanceOf[String]))
         NeoNode(node.id(), node.labels().asScala.toSet, new_map)
       }
       else{
         var all_map = node.asMap().asScala.toMap
-        val set = Set("Cont_ID", "uid")
-        var new_map = all_map filterKeys set
+        // val set = Set("Cont_ID", "uid")
+        // var new_map = all_map filterKeys set
+        var new_map = Map("Cont_ID" -> all_map.get("Cont_ID".asInstanceOf[String]), "uid"->all_map.get("uid".asInstanceOf[String])
+        )
         NeoNode(node.id(), node.labels().asScala.toSet, new_map)
       }
     }
