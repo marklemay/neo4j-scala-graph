@@ -188,15 +188,15 @@ object NeoData {
         // var new_map = all_map filterKeys set
         // Unfortunately filterkeys makes it not searializable
         // https://issues.scala-lang.org/browse/SI-6654
-        var new_map = Map("Cont_ID" -> all_map.get("Cont_ID".asInstanceOf[String]))
+        var new_map = Map("Cont_ID" -> all_map.getOrElse("Cont_ID", ""))
         NeoNode(node.id(), node.labels().asScala.toSet, new_map)
       }
       else{
         var all_map = node.asMap().asScala.toMap
         // val set = Set("Cont_ID", "uid")
         // var new_map = all_map filterKeys set
-        var new_map = Map("Cont_ID" -> all_map.get("Cont_ID".asInstanceOf[String]), "uid"->all_map.get("uid".asInstanceOf[String])
-        )
+        var new_map = Map("Cont_ID" -> all_map.getOrElse("Cont_ID", ""), "uid"->all_map.getOrElse("uid", ""))
+        println(new_map)
         NeoNode(node.id(), node.labels().asScala.toSet, new_map)
       }
     }
