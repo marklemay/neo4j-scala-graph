@@ -188,15 +188,14 @@ object NeoData {
         // var new_map = all_map filterKeys set
         // Unfortunately filterkeys makes it not searializable
         // https://issues.scala-lang.org/browse/SI-6654
-        var new_map = Map("Cont_ID" -> all_map.getOrElse("Cont_ID", ""))
+        var new_map = Map("Cont_ID" -> all_map.getOrElse("Cont_ID", ""),"path" -> all_map.getOrElse("path", ""))
         NeoNode(node.id(), node.labels().asScala.toSet, new_map)
       }
       else{
         var all_map = node.asMap().asScala.toMap
         // val set = Set("Cont_ID", "uid")
         // var new_map = all_map filterKeys set
-        var new_map = Map("Cont_ID" -> all_map.getOrElse("Cont_ID", ""), "uid"->all_map.getOrElse("uid", ""))
-        println(new_map)
+        var new_map = Map("Cont_ID" -> all_map.getOrElse("Cont_ID", ""), "uid"->all_map.getOrElse("uid", ""), "name" -> all_map.getOrElse("name", ""))
         NeoNode(node.id(), node.labels().asScala.toSet, new_map)
       }
     }
@@ -219,7 +218,7 @@ object NeoData {
     val nodes = allNodes(session).toSet
     val idToNode = nodes.map(n => n.id -> n).toMap
     val edges = allEdges(session).map(e => (idToNode(e._1), e._2, idToNode(e._3))).toSet
-    val scalaEdges = edges.flatMap(e => Set(e._1 ~> e._2, e._2 ~> e._3))
+    val scalaEdges = edges.flatMap(e => Set(e._1 ~> e._3))
     Graph.from(nodes, scalaEdges)
   }
 
