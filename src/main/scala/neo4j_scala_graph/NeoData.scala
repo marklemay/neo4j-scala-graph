@@ -218,7 +218,8 @@ object NeoData {
     val nodes = allNodes(session).toSet
     val idToNode = nodes.map(n => n.id -> n).toMap
     val edges = allEdges(session).map(e => (idToNode(e._1), e._2, idToNode(e._3))).toSet
-    val scalaEdges = edges.flatMap(e => Set(e._1 ~> e._3))
+    val scalaEdges = edges.flatMap(e => Set(e._1 ~> e._2, e._2 ~> e._3))
+    // val scalaEdges = edges.flatMap(e => Set(e._1 ~> e._3))
     Graph.from(nodes, scalaEdges)
   }
 
