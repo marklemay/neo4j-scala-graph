@@ -18,11 +18,11 @@ object NeoData {
   case class NeoRel(id: Long, `type`: String, properties: Map[String, Object]) extends NeoData
 
   def run(session: Session)(query: String): Graph[NeoNode, LDiEdge] = {
-    storeRecord(session)(session.run(query))
+    toLDiGraph(session)(session.run(query))
   }
 
   def runEncodeEdge(session: Session)(query: String): Graph[NeoData, DiEdge] = {
-    storeRecordEncodeEdge(session)(session.run(query))
+    toDiGraph(session)(session.run(query))
   }
 
   def getNode(session: Session)(id: Long): NeoNode = {
@@ -44,7 +44,7 @@ object NeoData {
    *
    *   WARNING: since Noe4j uses mutlisets, this will colapse some edges in the Scala graph!!!!!
    */
-  def storeRecord(session: Session)(rs: StatementResult): Graph[NeoNode, LDiEdge] = {
+  def toLDiGraph(session: Session)(rs: StatementResult): Graph[NeoNode, LDiEdge] = {
 
     var nodeIdMap = Map[Long, NeoNode]()
 
@@ -94,34 +94,12 @@ object NeoData {
     g
   }
 
-  @deprecated("beeter to call storeRecordEncodeEdge directly so multi edges are not collapsed")
-  def toDiGraph(g: Graph[NeoNode, LDiEdge]): Graph[NeoData, DiEdge] = {
-    val oldnodes = g.nodes.map(_.value)
-    val oldEdges = g.edges
-    var newG = Graph[NeoData, DiEdge]()
-
-    for (n <- oldnodes) {
-      newG += n
-    }
-
-    for (e <- oldEdges) {
-      val rel = e.label.asInstanceOf[NeoRel]
-
-      newG += e._1.value ~> rel
-
-      newG += rel ~> e._2.value
-    }
-
-    newG
-  }
-
-  //TODO: rename
 
   /**
    * Takes a record from neo4j and stores it in a LDiEdge
    *  WARNING: since Noe4j uses mutlisets, this will colapse some edges in the Scala graph
    */
-  def storeRecordEncodeEdge(session: Session)(rs: StatementResult): Graph[NeoData, DiEdge] = {
+  def toDiGraph(session: Session)(rs: StatementResult): Graph[NeoData, DiEdge] = {
 
     var nodeIdMap = Map[Long, NeoNode]()
 
@@ -182,27 +160,12 @@ object NeoData {
 
     for (rec <- recs.asScala) yield {
       val node = rec.get("s").asNode()
-      if (node.labels().asScala.toSet == Set("Artifact")){
-        var all_map = node.asMap().asScala.toMap
-        // val set = Set("Cont_ID", "uid")
-        // var new_map = all_map filterKeys set
-        // Unfortunately filterkeys makes it not searializable
-        // https://issues.scala-lang.org/browse/SI-6654
-        var new_map = Map("Cont_ID" -> all_map.getOrElse("Cont_ID", ""),"path" -> all_map.getOrElse("path", ""))
-        NeoNode(node.id(), node.labels().asScala.toSet, new_map)
-      }
-      else{
-        var all_map = node.asMap().asScala.toMap
-        // val set = Set("Cont_ID", "uid")
-        // var new_map = all_map filterKeys set
-        var new_map = Map("Cont_ID" -> all_map.getOrElse("Cont_ID", ""), "uid"->all_map.getOrElse("uid", ""), "name" -> all_map.getOrElse("name", ""))
-        NeoNode(node.id(), node.labels().asScala.toSet, new_map)
+
+      NeoNode(node.id(), node.labels().asScala.toSet, node.asMap().asScala.toMap)
       }
     }
-  }
 
   def allEdges(session: Session): Iterator[(Long, NeoRel, Long)] = {
-    //in neo4j all relationships are directed (?)
     val recs = session.run("""MATCH ()-[r]->() RETURN r """)
 
     for (rec <- recs.asScala) yield {

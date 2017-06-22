@@ -12,12 +12,9 @@ object Main {
 
     val session = driver.session();
 
-    //    val g = runEncodeEdge(session)("MATCH ()-[r]-() RETURN r")
-    //
-    //    println(g.mkString("\n"))
-
     val nodes = fullGraph(session)
-    println("done")
-    println(nodes)
+
+    val Some(cycle) = nodes.findCycle
+    println(cycle.mkString("\n"))
   }
 }
